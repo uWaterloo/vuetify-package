@@ -166,7 +166,7 @@ var _default = _calendarWithIntervals.default.extend({
         ref: 'pane',
         staticClass: 'v-calendar-daily__pane',
         style: {
-          height: (0, _helpers.convertToUnit)(this.bodyHeight)
+          height: (0, _helpers.convertToUnit)(this.bodyHeight + 50)
         }
       }, [this.genDayContainer()]);
     },

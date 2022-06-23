@@ -3638,7 +3638,7 @@ var __spread = undefined && undefined.__spread || function () {
         ref: 'pane',
         staticClass: 'v-calendar-daily__pane',
         style: {
-          height: Object(_util_helpers__WEBPACK_IMPORTED_MODULE_4__["convertToUnit"])(this.bodyHeight)
+          height: Object(_util_helpers__WEBPACK_IMPORTED_MODULE_4__["convertToUnit"])(this.bodyHeight + 50)
         }
       }, [this.genDayContainer()]);
     },
