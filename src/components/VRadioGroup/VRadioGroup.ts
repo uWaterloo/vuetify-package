@@ -6,11 +6,15 @@ import './VRadioGroup.sass'
 import VInput from '../VInput'
 import { BaseItemGroup } from '../VItemGroup/VItemGroup'
 
+// Mixins
+import Comparable from '../../mixins/comparable'
+
 // Types
 import mixins from '../../util/mixins'
 import { PropType } from 'vue'
 
 const baseMixins = mixins(
+  Comparable,
   BaseItemGroup,
   VInput
 )
@@ -84,13 +88,5 @@ export default baseMixins.extend({
       return label
     },
     onClick: BaseItemGroup.options.methods.onClick,
-  },
-
-  render (h) {
-    const vnode = VInput.options.render.call(this, h)
-
-    this._b(vnode.data!, 'div', this.attrs$)
-
-    return vnode
   },
 })

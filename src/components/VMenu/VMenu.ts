@@ -8,9 +8,11 @@ import { VThemeProvider } from '../VThemeProvider'
 import Activatable from '../../mixins/activatable'
 import Delayable from '../../mixins/delayable'
 import Dependent from '../../mixins/dependent'
+import Detachable from '../../mixins/detachable'
 import Menuable from '../../mixins/menuable'
 import Returnable from '../../mixins/returnable'
 import Roundable from '../../mixins/roundable'
+import Toggleable from '../../mixins/toggleable'
 import Themeable from '../../mixins/themeable'
 
 // Directives
@@ -24,7 +26,6 @@ import {
   convertToUnit,
   keyCodes,
 } from '../../util/helpers'
-import goTo from '../../services/goto'
 
 // Types
 import { VNode, VNodeDirective, VNodeData } from 'vue'
@@ -32,10 +33,12 @@ import { VNode, VNodeDirective, VNodeData } from 'vue'
 const baseMixins = mixins(
   Dependent,
   Delayable,
+  Detachable,
+  Menuable,
   Returnable,
   Roundable,
-  Themeable,
-  Menuable,
+  Toggleable,
+  Themeable
 )
 
 /* @vue/component */
@@ -73,6 +76,10 @@ export default baseMixins.extend({
     },
     offsetX: Boolean,
     offsetY: Boolean,
+    openOnClick: {
+      type: Boolean,
+      default: true,
+    },
     openOnHover: Boolean,
     origin: {
       type: String,
@@ -172,22 +179,7 @@ export default baseMixins.extend({
       if (next in this.tiles) {
         const tile = this.tiles[next]
         tile.classList.add('v-list-item--highlighted')
-        const scrollTop = this.$refs.content.scrollTop
-        const contentHeight = this.$refs.content.clientHeight
-
-        if (scrollTop > tile.offsetTop - 8) {
-          goTo(tile.offsetTop - tile.clientHeight, {
-            appOffset: false,
-            duration: 300,
-            container: this.$refs.content,
-          })
-        } else if (scrollTop + contentHeight < tile.offsetTop + tile.clientHeight + 8) {
-          goTo(tile.offsetTop - contentHeight + tile.clientHeight * 2, {
-            appOffset: false,
-            duration: 300,
-            container: this.$refs.content,
-          })
-        }
+        this.$refs.content.scrollTop = tile.offsetTop - tile.clientHeight
       }
 
       prev in this.tiles &&
@@ -385,7 +377,7 @@ export default baseMixins.extend({
     getTiles () {
       if (!this.$refs.content) return
 
-      this.tiles = Array.from(this.$refs.content.querySelectorAll('.v-list-item, .v-divider, .v-subheader'))
+      this.tiles = Array.from(this.$refs.content.querySelectorAll('.v-list-item'))
     },
     mouseEnterHandler () {
       this.runDelay('open', () => {
@@ -397,7 +389,7 @@ export default baseMixins.extend({
     mouseLeaveHandler (e: MouseEvent) {
       // Prevent accidental re-activation
       this.runDelay('close', () => {
-        if (this.$refs.content?.contains(e.relatedTarget as HTMLElement)) return
+        if (this.$refs.content.contains(e.relatedTarget as HTMLElement)) return
 
         requestAnimationFrame(() => {
           this.isActive = false

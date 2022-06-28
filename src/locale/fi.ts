@@ -55,15 +55,15 @@ export default {
   pagination: {
     ariaLabel: {
       wrapper: 'Pagination Navigation',
-      next: 'Seuraava sivu',
-      previous: 'Edellinen sivu',
-      page: 'Mene sivulle {0}',
-      currentPage: 'Nykyinen sivu, Sivu {0}',
+      next: 'Next page',
+      previous: 'Previous page',
+      page: 'Goto Page {0}',
+      currentPage: 'Current Page, Page {0}',
     },
   },
   rating: {
     ariaLabel: {
-      icon: 'Luokitus {0}/{1}',
+      icon: 'Rating {0} of {1}',
     },
   },
 }

@@ -11,9 +11,6 @@ import { ExtractVue } from './../../util/mixins'
 // Types
 import { VNode } from 'vue/types'
 
-// Components
-import VTabsBar from '../VTabs/VTabsBar'
-
 const baseMixins = mixins(
   Routable,
   // Must be after routable
@@ -22,11 +19,8 @@ const baseMixins = mixins(
   Themeable
 )
 
-type VTabBarInstance = InstanceType<typeof VTabsBar>
-
 interface options extends ExtractVue<typeof baseMixins> {
   $el: HTMLElement
-  tabsBar: VTabBarInstance
 }
 
 export default baseMixins.extend<options>().extend(
@@ -55,9 +49,7 @@ export default baseMixins.extend<options>().extend(
       }
     },
     value (): any {
-      let to = this.to || this.href
-
-      if (to == null) return to
+      let to = this.to || this.href || ''
 
       if (this.$router &&
         this.to === Object(this.to)
@@ -75,16 +67,12 @@ export default baseMixins.extend<options>().extend(
     },
   },
 
+  mounted () {
+    this.onRouteChange()
+  },
+
   methods: {
     click (e: KeyboardEvent | MouseEvent): void {
-      // Prevent keyboard actions
-      // from children elements
-      // within disabled tabs
-      if (this.disabled) {
-        e.preventDefault()
-        return
-      }
-
       // If user provides an
       // actual link, do not
       // prevent default
@@ -98,12 +86,6 @@ export default baseMixins.extend<options>().extend(
 
       this.to || this.toggle()
     },
-    toggle () {
-      // VItemGroup treats a change event as a click
-      if (!this.isActive || (!this.tabsBar.mandatory && !this.to)) {
-        this.$emit('change')
-      }
-    },
   },
 
   render (h): VNode {
@@ -113,7 +95,7 @@ export default baseMixins.extend<options>().extend(
       ...data.attrs,
       'aria-selected': String(this.isActive),
       role: 'tab',
-      tabindex: this.disabled ? -1 : 0,
+      tabindex: 0,
     }
     data.on = {
       ...data.on,

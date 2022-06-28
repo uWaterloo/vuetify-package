@@ -99,12 +99,9 @@ export default VSelect.extend({
         return this.lazySearch
       },
       set (val: any) { // TODO: this should be `string | null` but it breaks lots of other types
-        // emit update event only when the new
-        // search value is different from previous
-        if (this.lazySearch !== val) {
-          this.lazySearch = val
-          this.$emit('update:search-input', val)
-        }
+        this.lazySearch = val
+
+        this.$emit('update:search-input', val)
       },
     },
     isAnyValueAllowed (): boolean {
@@ -136,8 +133,7 @@ export default VSelect.extend({
       }
     },
     searchIsDirty (): boolean {
-      return this.internalSearch != null &&
-        this.internalSearch !== ''
+      return this.internalSearch != null
     },
     selectedItem (): any {
       if (this.multiple) return null
@@ -173,7 +169,6 @@ export default VSelect.extend({
         this.$refs.input && this.$refs.input.select()
       } else {
         document.removeEventListener('copy', this.onCopy)
-        this.blur()
         this.updateSelf()
       }
     },
@@ -217,16 +212,7 @@ export default VSelect.extend({
       // for duplicate items? no idea
       if (val === oldVal) return
 
-      if (!this.autoSelectFirst) {
-        const preSelectedItem = oldVal[this.$refs.menu.listIndex]
-
-        if (preSelectedItem) {
-          this.setMenuIndex(val.findIndex(i => i === preSelectedItem))
-        } else {
-          this.setMenuIndex(-1)
-        }
-        this.$emit('update:list-index', this.$refs.menu.listIndex)
-      }
+      this.setMenuIndex(-1)
 
       this.$nextTick(() => {
         if (
@@ -236,11 +222,7 @@ export default VSelect.extend({
         ) return
 
         this.$refs.menu.getTiles()
-
-        if (this.autoSelectFirst && val.length) {
-          this.setMenuIndex(0)
-          this.$emit('update:list-index', this.$refs.menu.listIndex)
-        }
+        this.setMenuIndex(0)
       })
     },
     onInternalSearchChanged () {
@@ -359,20 +341,13 @@ export default VSelect.extend({
       // If typing and menu is not currently active
       if (target.value) this.activateMenu()
 
-      if (!this.multiple && value === '') this.deleteCurrentItem()
-
       this.internalSearch = value
       this.badInput = target.validity && target.validity.badInput
     },
     onKeyDown (e: KeyboardEvent) {
       const keyCode = e.keyCode
 
-      if (
-        e.ctrlKey ||
-        ![keyCodes.home, keyCodes.end].includes(keyCode)
-      ) {
-        VSelect.options.methods.onKeyDown.call(this, e)
-      }
+      VSelect.options.methods.onKeyDown.call(this, e)
 
       // The ordering is important here
       // allows new value to be updated
@@ -425,18 +400,14 @@ export default VSelect.extend({
       })
     },
     updateSelf () {
-      if (
-        !this.searchIsDirty &&
+      if (!this.searchIsDirty &&
         !this.internalValue
       ) return
 
-      if (
-        !this.multiple &&
-        !this.valueComparator(
-          this.internalSearch,
-          this.getValue(this.internalValue)
-        )
-      ) {
+      if (!this.valueComparator(
+        this.internalSearch,
+        this.getValue(this.internalValue)
+      )) {
         this.setSearch()
       }
     },

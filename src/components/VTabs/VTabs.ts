@@ -141,16 +141,6 @@ export default baseMixins.extend<options>().extend({
   },
 
   mounted () {
-    if (typeof ResizeObserver !== 'undefined') {
-      const obs = new ResizeObserver(() => {
-        this.onResize()
-      })
-      obs.observe(this.$el)
-      this.$on('hook:destroyed', () => {
-        obs.disconnect()
-      })
-    }
-
     this.$nextTick(() => {
       window.setTimeout(this.callSlider, 30)
     })

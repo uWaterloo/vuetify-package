@@ -58,12 +58,11 @@
       +rtl()
         border-right: 1px solid rgba(map-get($material, 'fg-color'), map-get($material, 'divider-percent'))
 
-+sheet(v-stepper, $stepper-elevation, $stepper-border-radius, $stepper-shaped-border-radius)
-
 .v-stepper
   border-radius: $stepper-border-radius
   overflow: hidden
   position: relative
+  +elevation($stepper-elevation)
 
   &__header
     height: $stepper-header-height
@@ -137,8 +136,9 @@
           color: inherit
 
   &__label
-    display: block
-    flex-grow: 1
+    align-items: flex-start
+    display: flex
+    flex-direction: column
     line-height: $stepper-label-line-height
 
     +ltr()
@@ -148,7 +148,6 @@
       text-align: right
 
     small
-      display: block
       font-size: $stepper-label-small-font-size
       font-weight: $stepper-label-small-font-weight
       text-shadow: none
@@ -171,9 +170,6 @@
     > .v-btn
       margin: $stepper-content-btn-margin
 
-  &--flat
-    +elevation(0, true)
-
   &--is-booted
     .v-stepper__content, .v-stepper__wrapper
       transition: .3s map-get($transition, 'swing')
@@ -182,11 +178,7 @@
     padding-bottom: $stepper-vertical-padding-bottom
 
     .v-stepper__content
-      +ltr()
-        padding: $stepper-vertical-content-ltr-padding
-      +rtl()
-        padding: $stepper-vertical-content-rtl-padding
-  
+      padding: $stepper-vertical-content-padding
       width: auto
       +ltr()
         margin: $stepper-vertical-content-ltr-margin
@@ -219,7 +211,7 @@
       flex-basis: $stepper-alt-labels-flex-basis
 
       small
-        text-align: center
+        align-self: center
 
     .v-stepper__step__step
       margin-bottom: $stepper-alt-labels-step-step-margin-bottom

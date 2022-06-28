@@ -8,7 +8,6 @@ import { VNode } from 'vue'
 
 // Utils
 import mixins from '../../util/mixins'
-import { getSlot } from '../../util/helpers'
 
 /* @vue/component */
 export default mixins(Measurable).extend({
@@ -43,7 +42,7 @@ export default mixins(Measurable).extend({
       return this.$createElement('div', {
         staticClass: 'v-responsive__content',
         class: this.contentClass,
-      }, getSlot(this))
+      }, this.$slots.default)
     },
   },
 

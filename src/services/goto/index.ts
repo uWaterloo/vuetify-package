@@ -15,7 +15,7 @@ import { VuetifyServiceContract } from 'vuetify/types/services'
 
 export default function goTo (
   _target: VuetifyGoToTarget,
-  _settings: GoToOptions = {}
+  _settings: Partial<GoToOptions> = {}
 ): Promise<number> {
   const settings: GoToOptions = {
     container: (document.scrollingElement as HTMLElement | null) || document.body || document.documentElement,
@@ -65,12 +65,7 @@ export default function goTo (
     container.scrollTop = Math.floor(startLocation + (targetLocation - startLocation) * ease(progress))
 
     const clientHeight = container === document.body ? document.documentElement.clientHeight : container.clientHeight
-    const reachBottom = clientHeight + container.scrollTop >= container.scrollHeight
-    if (
-      progress === 1 ||
-      // Need to go lower but reach bottom
-      (targetLocation > container.scrollTop && reachBottom)
-    ) {
+    if (progress === 1 || clientHeight + container.scrollTop === container.scrollHeight) {
       return resolve(targetLocation)
     }
 

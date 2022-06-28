@@ -90,7 +90,9 @@ export default mixins(
         : Themeable.options.computed.isDark.call(this)
     },
     styles (): object {
-      if (this.absolute || !this.app) return {}
+      // Styles are not needed when
+      // using the absolute prop.
+      if (this.absolute) return {}
 
       const {
         bar,
@@ -102,10 +104,12 @@ export default mixins(
         top,
       } = this.$vuetify.application
 
+      // Should always move for y-axis
+      // applicationable components.
       return {
         paddingBottom: convertToUnit(bottom + footer + insetFooter),
-        paddingLeft: convertToUnit(left),
-        paddingRight: convertToUnit(right),
+        paddingLeft: !this.app ? undefined : convertToUnit(left),
+        paddingRight: !this.app ? undefined : convertToUnit(right),
         paddingTop: convertToUnit(bar + top),
       }
     },
@@ -163,14 +167,13 @@ export default mixins(
       const data = setColor(this.color, {
         staticClass: 'v-snack__wrapper',
         class: VSheet.options.computed.classes.call(this),
-        style: VSheet.options.computed.styles.call(this),
         directives: [{
           name: 'show',
           value: this.isActive,
         }],
         on: {
-          pointerenter: () => window.clearTimeout(this.activeTimeout),
-          pointerleave: this.setTimeout,
+          mouseenter: () => window.clearTimeout(this.activeTimeout),
+          mouseleave: this.setTimeout,
         },
       })
 

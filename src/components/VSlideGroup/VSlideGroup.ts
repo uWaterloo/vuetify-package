@@ -20,13 +20,10 @@ import mixins, { ExtractVue } from '../../util/mixins'
 
 // Types
 import Vue, { VNode } from 'vue'
-import { composedPath } from '../../util/helpers'
 
 interface TouchEvent {
   touchstartX: number
-  touchstartY: number
   touchmoveX: number
-  touchmoveY: number
   stopPropagation: Function
 }
 
@@ -39,56 +36,6 @@ interface options extends Vue {
   $refs: {
     content: HTMLElement
     wrapper: HTMLElement
-  }
-}
-
-function bias (val: number) {
-  const c = 0.501
-  const x = Math.abs(val)
-  return Math.sign(val) * (x / ((1 / c - 2) * (1 - x) + 1))
-}
-
-export function calculateUpdatedOffset (
-  selectedElement: HTMLElement,
-  widths: Widths,
-  rtl: boolean,
-  currentScrollOffset: number
-): number {
-  const clientWidth = selectedElement.clientWidth
-  const offsetLeft = rtl
-    ? (widths.content - selectedElement.offsetLeft - clientWidth)
-    : selectedElement.offsetLeft
-
-  if (rtl) {
-    currentScrollOffset = -currentScrollOffset
-  }
-
-  const totalWidth = widths.wrapper + currentScrollOffset
-  const itemOffset = clientWidth + offsetLeft
-  const additionalOffset = clientWidth * 0.4
-
-  if (offsetLeft <= currentScrollOffset) {
-    currentScrollOffset = Math.max(offsetLeft - additionalOffset, 0)
-  } else if (totalWidth <= itemOffset) {
-    currentScrollOffset = Math.min(currentScrollOffset - (totalWidth - itemOffset - additionalOffset), widths.content - widths.wrapper)
-  }
-
-  return rtl ? -currentScrollOffset : currentScrollOffset
-}
-
-export function calculateCenteredOffset (
-  selectedElement: HTMLElement,
-  widths: Widths,
-  rtl: boolean
-): number {
-  const { offsetLeft, clientWidth } = selectedElement
-
-  if (rtl) {
-    const offsetCentered = widths.content - offsetLeft - clientWidth / 2 - widths.wrapper / 2
-    return -Math.min(widths.content - widths.wrapper, Math.max(0, offsetCentered))
-  } else {
-    const offsetCentered = offsetLeft + clientWidth / 2 - widths.wrapper / 2
-    return Math.min(widths.content - widths.wrapper, Math.max(0, offsetCentered))
   }
 }
 
@@ -138,11 +85,10 @@ export const BaseSlideGroup = mixins<options &
   },
 
   data: () => ({
+    internalItemsLength: 0,
     isOverflowing: false,
     resizeTimeout: 0,
     startX: 0,
-    isSwipingHorizontal: false,
-    isSwiping: false,
     scrollOffset: 0,
     widths: {
       content: 0,
@@ -151,9 +97,6 @@ export const BaseSlideGroup = mixins<options &
   }),
 
   computed: {
-    canTouch (): boolean {
-      return typeof window !== 'undefined'
-    },
     __cachedNext (): VNode {
       return this.genTransition('next')
     },
@@ -215,66 +158,20 @@ export const BaseSlideGroup = mixins<options &
     // and need to be recalculated
     isOverflowing: 'setWidths',
     scrollOffset (val) {
-      if (this.$vuetify.rtl) val = -val
-
-      let scroll =
-        val <= 0
-          ? bias(-val)
-          : val > this.widths.content - this.widths.wrapper
-            ? -(this.widths.content - this.widths.wrapper) + bias(this.widths.content - this.widths.wrapper - val)
-            : -val
-
-      if (this.$vuetify.rtl) scroll = -scroll
-
-      this.$refs.content.style.transform = `translateX(${scroll}px)`
+      this.$refs.content.style.transform = `translateX(${-val}px)`
     },
   },
 
-  mounted () {
-    if (typeof ResizeObserver !== 'undefined') {
-      const obs = new ResizeObserver(() => {
-        this.onResize()
-      })
-      obs.observe(this.$el)
-      obs.observe(this.$refs.content)
-      this.$on('hook:destroyed', () => {
-        obs.disconnect()
-      })
-    } else {
-      let itemsLength = 0
-      this.$on('hook:beforeUpdate', () => {
-        itemsLength = (this.$refs.content?.children || []).length
-      })
-      this.$on('hook:updated', () => {
-        if (itemsLength === (this.$refs.content?.children || []).length) return
-        this.setWidths()
-      })
-    }
+  beforeUpdate () {
+    this.internalItemsLength = (this.$children || []).length
+  },
+
+  updated () {
+    if (this.internalItemsLength === (this.$children || []).length) return
+    this.setWidths()
   },
 
   methods: {
-    onScroll () {
-      this.$refs.wrapper.scrollLeft = 0
-    },
-    onFocusin (e: FocusEvent) {
-      if (!this.isOverflowing) return
-
-      // Focused element is likely to be the root of an item, so a
-      // breadth-first search will probably find it in the first iteration
-      for (const el of composedPath(e)) {
-        for (const vm of this.items) {
-          if (vm.$el === el) {
-            this.scrollOffset = calculateUpdatedOffset(
-              vm.$el as HTMLElement,
-              this.widths,
-              this.$vuetify.rtl,
-              this.scrollOffset
-            )
-            return
-          }
-        }
-      }
-    },
     // Always generate next for scrollable hint
     genNext (): VNode | null {
       const slot = this.$scopedSlots.next
@@ -296,9 +193,6 @@ export const BaseSlideGroup = mixins<options &
       return this.$createElement('div', {
         staticClass: 'v-slide-group__content',
         ref: 'content',
-        on: {
-          focusin: this.onFocusin,
-        },
       }, this.$slots.default)
     },
     genData (): object {
@@ -365,9 +259,6 @@ export const BaseSlideGroup = mixins<options &
           },
         }],
         ref: 'wrapper',
-        on: {
-          scroll: this.onScroll,
-        },
       }, [this.genContent()])
     },
     calculateNewOffset (direction: 'prev' | 'next', widths: Widths, rtl: boolean, currentScrollOffset: number) {
@@ -396,27 +287,9 @@ export const BaseSlideGroup = mixins<options &
       content.style.setProperty('willChange', 'transform')
     },
     onTouchMove (e: TouchEvent) {
-      if (!this.canTouch) return
-
-      if (!this.isSwiping) {
-        // only calculate disableSwipeHorizontal during the first onTouchMove invoke
-        // in order to ensure disableSwipeHorizontal value is consistent between onTouchStart and onTouchEnd
-        const diffX = e.touchmoveX - e.touchstartX
-        const diffY = e.touchmoveY - e.touchstartY
-        this.isSwipingHorizontal = Math.abs(diffX) > Math.abs(diffY)
-        this.isSwiping = true
-      }
-
-      if (this.isSwipingHorizontal) {
-        // sliding horizontally
-        this.scrollOffset = this.startX - e.touchmoveX
-        // temporarily disable window vertical scrolling
-        document.documentElement.style.overflowY = 'hidden'
-      }
+      this.scrollOffset = this.startX - e.touchmoveX
     },
     onTouchEnd () {
-      if (!this.canTouch) return
-
       const { content, wrapper } = this.$refs
       const maxScrollOffset = content.clientWidth - wrapper.clientWidth
 
@@ -438,10 +311,6 @@ export const BaseSlideGroup = mixins<options &
           this.scrollOffset = maxScrollOffset
         }
       }
-
-      this.isSwiping = false
-      // rollback whole page scrolling to default
-      document.documentElement.style.removeProperty('overflow-y')
     },
     overflowCheck (e: TouchEvent, fn: (e: TouchEvent) => void) {
       e.stopPropagation()
@@ -470,18 +339,51 @@ export const BaseSlideGroup = mixins<options &
       ) {
         this.scrollOffset = 0
       } else if (this.centerActive) {
-        this.scrollOffset = calculateCenteredOffset(
+        this.scrollOffset = this.calculateCenteredOffset(
           this.selectedItem.$el as HTMLElement,
           this.widths,
           this.$vuetify.rtl
         )
       } else if (this.isOverflowing) {
-        this.scrollOffset = calculateUpdatedOffset(
+        this.scrollOffset = this.calculateUpdatedOffset(
           this.selectedItem.$el as HTMLElement,
           this.widths,
           this.$vuetify.rtl,
           this.scrollOffset
         )
+      }
+    },
+    calculateUpdatedOffset (selectedElement: HTMLElement, widths: Widths, rtl: boolean, currentScrollOffset: number): number {
+      const clientWidth = selectedElement.clientWidth
+      const offsetLeft = rtl
+        ? (widths.content - selectedElement.offsetLeft - clientWidth)
+        : selectedElement.offsetLeft
+
+      if (rtl) {
+        currentScrollOffset = -currentScrollOffset
+      }
+
+      const totalWidth = widths.wrapper + currentScrollOffset
+      const itemOffset = clientWidth + offsetLeft
+      const additionalOffset = clientWidth * 0.4
+
+      if (offsetLeft <= currentScrollOffset) {
+        currentScrollOffset = Math.max(offsetLeft - additionalOffset, 0)
+      } else if (totalWidth <= itemOffset) {
+        currentScrollOffset = Math.min(currentScrollOffset - (totalWidth - itemOffset - additionalOffset), widths.content - widths.wrapper)
+      }
+
+      return rtl ? -currentScrollOffset : currentScrollOffset
+    },
+    calculateCenteredOffset (selectedElement: HTMLElement, widths: Widths, rtl: boolean): number {
+      const { offsetLeft, clientWidth } = selectedElement
+
+      if (rtl) {
+        const offsetCentered = widths.content - offsetLeft - clientWidth / 2 - widths.wrapper / 2
+        return -Math.min(widths.content - widths.wrapper, Math.max(0, offsetCentered))
+      } else {
+        const offsetCentered = offsetLeft + clientWidth / 2 - widths.wrapper / 2
+        return Math.min(widths.content - widths.wrapper, Math.max(0, offsetCentered))
       }
     },
     scrollTo /* istanbul ignore next */ (location: 'prev' | 'next') {
@@ -491,10 +393,8 @@ export const BaseSlideGroup = mixins<options &
         wrapper: this.$refs.wrapper ? this.$refs.wrapper.clientWidth : 0,
       }, this.$vuetify.rtl, this.scrollOffset)
     },
-    setWidths () {
+    setWidths /* istanbul ignore next */  () {
       window.requestAnimationFrame(() => {
-        if (this._isDestroyed) return
-
         const { content, wrapper } = this.$refs
 
         this.widths = {
@@ -502,10 +402,7 @@ export const BaseSlideGroup = mixins<options &
           wrapper: wrapper ? wrapper.clientWidth : 0,
         }
 
-        // https://github.com/vuetifyjs/vuetify/issues/13212
-        // We add +1 to the wrappers width to prevent an issue where the `clientWidth`
-        // gets calculated wrongly by the browser if using a different zoom-level.
-        this.isOverflowing = this.widths.wrapper + 1 < this.widths.content
+        this.isOverflowing = this.widths.wrapper < this.widths.content
 
         this.scrollIntoView()
       })

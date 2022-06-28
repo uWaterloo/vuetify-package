@@ -9,7 +9,10 @@ export default VDialog.extend({
 
   props: {
     inset: Boolean,
-    maxWidth: [String, Number],
+    maxWidth: {
+      type: [String, Number],
+      default: 'auto',
+    },
     transition: {
       type: String,
       default: 'bottom-sheet-transition',

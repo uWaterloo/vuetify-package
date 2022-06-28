@@ -1,25 +1,22 @@
 declare module 'vuetify/lib' {
+  // eslint-disable-next-line import/no-duplicates
+  import { VueConstructor, DirectiveOptions } from 'vue'
   import Vuetify from 'vuetify'
   import { Colors } from 'vuetify/lib/util/colors'
 
   export default Vuetify
 
   const colors: Colors
-
-  export {
-    colors,
-  }
-  export * from 'vuetify/lib/components'
-  export * from 'vuetify/lib/directives'
-}
-
-declare module 'vuetify/lib/components' {
-  import { VueConstructor } from 'vue'
-
+  const ClickOutside: DirectiveOptions
+  const Intersect: DirectiveOptions
+  const Mutate: DirectiveOptions
+  const Resize: DirectiveOptions
+  const Ripple: DirectiveOptions
+  const Scroll: DirectiveOptions
+  const Touch: DirectiveOptions
   const VApp: VueConstructor
   const VAppBar: VueConstructor
   const VAppBarNavIcon: VueConstructor
-  const VAppBarTitle: VueConstructor
   const VAlert: VueConstructor
   const VAutocomplete: VueConstructor
   const VAvatar: VueConstructor
@@ -110,7 +107,6 @@ declare module 'vuetify/lib/components' {
   const VNavigationDrawer: VueConstructor
   const VOverflowBtn: VueConstructor
   const VOverlay: VueConstructor
-  const VOtpInput: VueConstructor
   const VPagination: VueConstructor
   const VSheet: VueConstructor
   const VParallax: VueConstructor
@@ -145,7 +141,6 @@ declare module 'vuetify/lib/components' {
   const VTabsSlider: VueConstructor
   const VTextarea: VueConstructor
   const VTextField: VueConstructor
-  const VThemeProvider: VueConstructor
   const VTimeline: VueConstructor
   const VTimelineItem: VueConstructor
   const VTimePicker: VueConstructor
@@ -182,10 +177,17 @@ declare module 'vuetify/lib/components' {
   const VExpandXTransition: VueConstructor
 
   export {
+    colors,
+    ClickOutside,
+    Intersect,
+    Mutate,
+    Ripple,
+    Resize,
+    Scroll,
+    Touch,
     VApp,
     VAppBar,
     VAppBarNavIcon,
-    VAppBarTitle,
     VAlert,
     VAutocomplete,
     VAvatar,
@@ -276,7 +278,6 @@ declare module 'vuetify/lib/components' {
     VNavigationDrawer,
     VOverflowBtn,
     VOverlay,
-    VOtpInput,
     VPagination,
     VSheet,
     VParallax,
@@ -311,7 +312,6 @@ declare module 'vuetify/lib/components' {
     VTabsSlider,
     VTextarea,
     VTextField,
-    VThemeProvider,
     VTimeline,
     VTimelineItem,
     VTimePicker,
@@ -350,6 +350,7 @@ declare module 'vuetify/lib/components' {
 }
 
 declare module 'vuetify/lib/directives' {
+  // eslint-disable-next-line import/no-duplicates
   import { DirectiveOptions } from 'vue'
 
   const ClickOutside: DirectiveOptions
@@ -369,10 +370,4 @@ declare module 'vuetify/lib/directives' {
     Scroll,
     Touch,
   }
-}
-
-declare module 'vuetify/lib/services/goto' {
-  import { GoToOptions, VuetifyGoToTarget } from 'vuetify/types/services/goto'
-
-  export default function goTo(target: VuetifyGoToTarget, options?: Partial<GoToOptions>): Promise<number>
 }

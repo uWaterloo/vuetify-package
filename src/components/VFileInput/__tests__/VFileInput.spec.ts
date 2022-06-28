@@ -42,14 +42,6 @@ describe('VFileInput.ts', () => {
     expect(wrapper.html()).toMatchSnapshot()
   })
 
-  it('should render multiple', () => {
-    const wrapper = mountFunction({
-      propsData: { multiple: true },
-    })
-
-    expect(wrapper.html()).toMatchSnapshot()
-  })
-
   it('should render counter', () => {
     const wrapper = mountFunction({
       propsData: {

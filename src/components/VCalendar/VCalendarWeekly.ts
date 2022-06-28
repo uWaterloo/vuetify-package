@@ -159,9 +159,7 @@ export default CalendarBase.extend({
         key: day.date,
         staticClass: 'v-calendar-weekly__day',
         class: this.getRelativeClasses(day, outside),
-        on: this.getDefaultMouseEventHandlers(':day', nativeEvent => {
-          return { nativeEvent, ...day }
-        }),
+        on: this.getDefaultMouseEventHandlers(':day', _e => day),
       }, [
         this.genDayLabel(day),
         ...(getSlot(this, 'day', () => ({ outside, index, week, ...day })) || []),
@@ -186,7 +184,7 @@ export default CalendarBase.extend({
         on: this.getMouseEventHandlers({
           'click:date': { event: 'click', stop: true },
           'contextmenu:date': { event: 'contextmenu', stop: true, prevent: true, result: false },
-        }, nativeEvent => ({ nativeEvent, ...day })),
+        }, _e => day),
       }, hasMonth
         ? this.monthFormatter(day, this.shortMonths) + ' ' + this.dayFormatter(day, false)
         : this.dayFormatter(day, false)

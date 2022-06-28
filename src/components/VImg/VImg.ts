@@ -18,7 +18,6 @@ import Themeable from '../../mixins/themeable'
 import mixins from '../../util/mixins'
 import mergeData from '../../util/mergeData'
 import { consoleWarn } from '../../util/console'
-import { getSlot } from '../../util/helpers'
 
 // not intended for public use, this is passed in by vuetify-loader
 export interface srcObject {
@@ -218,10 +217,9 @@ export default mixins(
       image.onerror = this.onError
 
       this.hasError = false
+      image.src = this.normalisedSrc.src
       this.sizes && (image.sizes = this.sizes)
       this.normalisedSrc.srcset && (image.srcset = this.normalisedSrc.srcset)
-      image.src = this.normalisedSrc.src
-      this.$emit('loadstart', this.normalisedSrc.src)
 
       this.aspectRatio || this.pollForSize(image)
       this.getSrc()
@@ -251,12 +249,11 @@ export default mixins(
       return content
     },
     __genPlaceholder (): VNode | void {
-      const slot = getSlot(this, 'placeholder')
-      if (slot) {
+      if (this.$slots.placeholder) {
         const placeholder = this.isLoading
           ? [this.$createElement('div', {
             staticClass: 'v-image__placeholder',
-          }, slot)]
+          }, this.$slots.placeholder)]
           : []
 
         if (!this.transition) return placeholder[0]

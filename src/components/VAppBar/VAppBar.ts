@@ -225,9 +225,6 @@ export default baseMixins.extend({
     invertedScroll (val: boolean) {
       this.isActive = !val || this.currentScroll !== 0
     },
-    hideOnScroll (val: boolean) {
-      this.isActive = !val || this.currentScroll < this.computedScrollThreshold
-    },
   },
 
   created () {

@@ -90,9 +90,7 @@ export default mixins(header).extend({
       children.push(this.genSortSelect(sortHeaders))
     }
 
-    const th = children.length
-      ? h('th', [h('div', { staticClass: 'v-data-table-header-mobile__wrapper' }, children)])
-      : undefined
+    const th = h('th', [h('div', { staticClass: 'v-data-table-header-mobile__wrapper' }, children)])
 
     const tr = h('tr', [th])
 

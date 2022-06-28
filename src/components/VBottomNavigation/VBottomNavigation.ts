@@ -52,10 +52,6 @@ export default mixins(
     },
     mandatory: Boolean,
     shift: Boolean,
-    tag: {
-      type: String,
-      default: 'div',
-    },
   },
 
   data () {
@@ -91,10 +87,6 @@ export default mixins(
     },
   },
 
-  watch: {
-    canScroll: 'onScroll',
-  },
-
   created () {
     /* istanbul ignore next */
     if (this.$attrs.hasOwnProperty('active')) {
@@ -104,16 +96,8 @@ export default mixins(
 
   methods: {
     thresholdMet () {
-      if (this.hideOnScroll) {
-        this.isActive = !this.isScrollingUp ||
-          this.currentScroll > this.computedScrollThreshold
-
-        this.$emit('update:input-value', this.isActive)
-      }
-
-      if (this.currentThreshold < this.computedScrollThreshold) return
-
-      this.savedScroll = this.currentScroll
+      this.isActive = !this.isScrollingUp
+      this.$emit('update:input-value', this.isActive)
     },
     updateApplication (): number {
       return this.$el
@@ -136,7 +120,6 @@ export default mixins(
           this.mandatory ||
           this.value !== undefined
         ),
-        tag: this.tag,
         value: this.internalValue,
       },
       on: { change: this.updateValue },

@@ -234,7 +234,6 @@ describe('VCombobox.ts', () => {
       { text: 'Vuetify', value: 3 },
     ]
     const wrapper = mountFunction({
-      attachToDocument: true,
       propsData: {
         items,
       },
@@ -298,7 +297,7 @@ describe('VCombobox.ts', () => {
     expect(wrapper.vm.internalValue).toBe('')
 
     wrapper.vm.setValue(null)
-    expect(wrapper.vm.internalValue).toBeNull()
+    expect(wrapper.vm.internalValue).toBeUndefined()
 
     wrapper.vm.setValue(undefined)
     expect(wrapper.vm.internalValue).toBeUndefined()
@@ -306,7 +305,7 @@ describe('VCombobox.ts', () => {
     wrapper.setData({ lazySearch: 'foo' })
 
     wrapper.vm.setValue(null)
-    expect(wrapper.vm.internalValue).toBeNull()
+    expect(wrapper.vm.internalValue).toBe('foo')
 
     wrapper.vm.setValue(undefined)
     expect(wrapper.vm.internalValue).toBe('foo')
@@ -320,35 +319,5 @@ describe('VCombobox.ts', () => {
     })
 
     expect(wrapper.vm.$attrs.autocomplete).toBe('on')
-  })
-
-  // https://github.com/vuetifyjs/vuetify/issues/6607
-  it('should select first row when autoSelectFirst true is applied', async () => {
-    const wrapper = mountFunction({
-      propsData: {
-        autoSelectFirst: true,
-        items: [
-          { text: 'Learn JavaScript', done: false },
-          { text: 'Learn Vue', done: false },
-          { text: 'Play around in JSFiddle', done: true },
-          { text: 'Build something awesome', done: true },
-        ],
-      },
-    })
-
-    const input = wrapper.find('input')
-    const element = input.element as HTMLInputElement
-
-    const listIndexUpdate = jest.fn()
-    wrapper.vm.$on('update:list-index', listIndexUpdate)
-
-    input.trigger('focus')
-    await wrapper.vm.$nextTick()
-    element.value = 'L'
-    input.trigger('input')
-    await wrapper.vm.$nextTick()
-
-    expect(listIndexUpdate.mock.calls.length === 1).toBe(true)
-    expect(listIndexUpdate.mock.calls[0][0]).toBe(0)
   })
 })

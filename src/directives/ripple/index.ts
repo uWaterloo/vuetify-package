@@ -8,13 +8,17 @@ import { keyCodes } from '../../util/helpers'
 // Types
 import { VNode, VNodeDirective } from 'vue'
 
-type VuetifyRippleEvent = (MouseEvent | TouchEvent | KeyboardEvent) & { rippleStop?: boolean }
+type VuetifyRippleEvent = MouseEvent | TouchEvent | KeyboardEvent
 
 const DELAY_RIPPLE = 80
 
 function transform (el: HTMLElement, value: string) {
   el.style.transform = value
   el.style.webkitTransform = value
+}
+
+function opacity (el: HTMLElement, value: number) {
+  el.style.opacity = value.toString()
 }
 
 export interface RippleOptions {
@@ -105,12 +109,14 @@ const ripples = {
     animation.classList.add('v-ripple__animation--enter')
     animation.classList.add('v-ripple__animation--visible')
     transform(animation, `translate(${x}, ${y}) scale3d(${scale},${scale},${scale})`)
+    opacity(animation, 0)
     animation.dataset.activated = String(performance.now())
 
     setTimeout(() => {
       animation.classList.remove('v-ripple__animation--enter')
       animation.classList.add('v-ripple__animation--in')
       transform(animation, `translate(${centerX}, ${centerY}) scale3d(1,1,1)`)
+      opacity(animation, 0.25)
     }, 0)
   },
 
@@ -131,6 +137,7 @@ const ripples = {
     setTimeout(() => {
       animation.classList.remove('v-ripple__animation--in')
       animation.classList.add('v-ripple__animation--out')
+      opacity(animation, 0)
 
       setTimeout(() => {
         const ripples = el.getElementsByClassName('v-ripple__animation')
@@ -152,12 +159,7 @@ function isRippleEnabled (value: any): value is true {
 function rippleShow (e: VuetifyRippleEvent) {
   const value: RippleOptions = {}
   const element = e.currentTarget as HTMLElement
-
-  if (!element || !element._ripple || element._ripple.touched || e.rippleStop) return
-
-  // Don't allow the event to trigger ripples on any other elements
-  e.rippleStop = true
-
+  if (!element || !element._ripple || element._ripple.touched) return
   if (isTouchEvent(e)) {
     element._ripple.touched = true
     element._ripple.isTouch = true
@@ -244,13 +246,6 @@ function keyboardRippleHide (e: KeyboardEvent) {
   rippleHide(e)
 }
 
-function focusRippleHide (e: FocusEvent) {
-  if (keyboardRipple === true) {
-    keyboardRipple = false
-    rippleHide(e)
-  }
-}
-
 function updateRipple (el: HTMLElement, binding: VNodeDirective, wasEnabled: boolean) {
   const enabled = isRippleEnabled(binding.value)
   if (!enabled) {
@@ -281,8 +276,6 @@ function updateRipple (el: HTMLElement, binding: VNodeDirective, wasEnabled: boo
     el.addEventListener('keydown', keyboardRippleShow)
     el.addEventListener('keyup', keyboardRippleHide)
 
-    el.addEventListener('blur', focusRippleHide)
-
     // Anchor tags can be dragged, causes other hides to fail - #1537
     el.addEventListener('dragstart', rippleHide, { passive: true })
   } else if (!enabled && wasEnabled) {
@@ -301,7 +294,6 @@ function removeListeners (el: HTMLElement) {
   el.removeEventListener('keydown', keyboardRippleShow)
   el.removeEventListener('keyup', keyboardRippleHide)
   el.removeEventListener('dragstart', rippleHide)
-  el.removeEventListener('blur', focusRippleHide)
 }
 
 function directive (el: HTMLElement, binding: VNodeDirective, node: VNode) {

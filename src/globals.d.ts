@@ -29,14 +29,11 @@ declare global {
   }
 
   interface HTMLElement {
-    _clickOutside?: Record<number, {
-      onClick: EventListener
-      onMousedown: EventListener
-    } | undefined> & { lastMousedownWasOutside: boolean }
-    _onResize?: Record<number, {
+    _clickOutside?: EventListenerOrEventListenerObject
+    _onResize?: {
       callback: () => void
       options?: boolean | AddEventListenerOptions
-    } | undefined>
+    }
     _ripple?: {
       enabled?: boolean
       centered?: boolean
@@ -47,27 +44,20 @@ declare global {
       showTimer?: number
       showTimerCommit?: (() => void) | null
     }
-    _observe?: Record<number, {
+    _observe?: {
       init: boolean
       observer: IntersectionObserver
-    } | undefined>
-    _mutate?: Record<number, {
+    }
+    _mutate?: {
       observer: MutationObserver
-    } | undefined>
-    _onScroll?: Record<number, {
+    }
+    _onScroll?: {
       handler: EventListenerOrEventListenerObject
       options: boolean | AddEventListenerOptions
       target?: EventTarget
-    } | undefined>
+    }
     _touchHandlers?: {
       [_uid: number]: TouchStoredHandlers
-    }
-    _transitionInitialStyles?: {
-      position: string
-      top: string
-      left: string
-      width: string
-      height: string
     }
   }
 

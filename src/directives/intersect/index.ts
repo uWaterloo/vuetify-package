@@ -1,5 +1,4 @@
 import { VNodeDirective } from 'vue/types/vnode'
-import { VNode } from 'vue'
 
 type ObserveHandler = (
   entries: IntersectionObserverEntry[],
@@ -15,9 +14,7 @@ interface ObserveVNodeDirective extends Omit<VNodeDirective, 'modifiers'> {
   }
 }
 
-function inserted (el: HTMLElement, binding: ObserveVNodeDirective, vnode: VNode) {
-  if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return
-
+function inserted (el: HTMLElement, binding: ObserveVNodeDirective) {
   const modifiers = binding.modifiers || {}
   const value = binding.value
   const { handler, options } = typeof value === 'object'
@@ -27,42 +24,40 @@ function inserted (el: HTMLElement, binding: ObserveVNodeDirective, vnode: VNode
     entries: IntersectionObserverEntry[] = [],
     observer: IntersectionObserver
   ) => {
-    const _observe = el._observe?.[vnode.context!._uid]
-    if (!_observe) return // Just in case, should never fire
-
-    const isIntersecting = entries.some(entry => entry.isIntersecting)
+    /* istanbul ignore if */
+    if (!el._observe) return // Just in case, should never fire
 
     // If is not quiet or has already been
     // initted, invoke the user callback
     if (
       handler && (
         !modifiers.quiet ||
-        _observe.init
-      ) && (
-        !modifiers.once ||
-        isIntersecting ||
-        _observe.init
+        el._observe.init
       )
     ) {
+      const isIntersecting = Boolean(entries.find(entry => entry.isIntersecting))
+
       handler(entries, observer, isIntersecting)
     }
 
-    if (isIntersecting && modifiers.once) unbind(el, binding, vnode)
-    else _observe.init = true
+    // If has already been initted and
+    // has the once modifier, unbind
+    if (el._observe.init && modifiers.once) unbind(el)
+    // Otherwise, mark the observer as initted
+    else (el._observe.init = true)
   }, options)
 
-  el._observe = Object(el._observe)
-  el._observe![vnode.context!._uid] = { init: false, observer }
+  el._observe = { init: false, observer }
 
   observer.observe(el)
 }
 
-function unbind (el: HTMLElement, binding: ObserveVNodeDirective, vnode: VNode) {
-  const observe = el._observe?.[vnode.context!._uid]
-  if (!observe) return
+function unbind (el: HTMLElement) {
+  /* istanbul ignore if */
+  if (!el._observe) return
 
-  observe.observer.unobserve(el)
-  delete el._observe![vnode.context!._uid]
+  el._observe.observer.unobserve(el)
+  delete el._observe
 }
 
 export const Intersect = {

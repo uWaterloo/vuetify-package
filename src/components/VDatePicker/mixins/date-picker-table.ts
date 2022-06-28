@@ -9,7 +9,7 @@ import Localable from '../../../mixins/localable'
 import Themeable from '../../../mixins/themeable'
 
 // Utils
-import { createItemTypeNativeListeners, sanitizeDateString } from '../util'
+import { createItemTypeNativeListeners } from '../util'
 import isDateAllowed from '../util/isDateAllowed'
 import { mergeListeners } from '../../../util/mergeData'
 import mixins from '../../../util/mixins'
@@ -93,14 +93,7 @@ export default mixins(
   },
 
   methods: {
-    genButtonClasses (
-      isAllowed: boolean,
-      isFloating: boolean,
-      isSelected: boolean,
-      isCurrent: boolean,
-      isFirst: boolean,
-      isLast: boolean,
-    ) {
+    genButtonClasses (isAllowed: boolean, isFloating: boolean, isSelected: boolean, isCurrent: boolean) {
       return {
         'v-size--default': !isFloating,
         'v-date-picker-table__current': isCurrent,
@@ -110,8 +103,6 @@ export default mixins(
         'v-btn--rounded': isFloating,
         'v-btn--disabled': !isAllowed || this.disabled,
         'v-btn--outlined': isCurrent && !isSelected,
-        'v-date-picker--first-in-range': isFirst,
-        'v-date-picker--last-in-range': isLast,
         ...this.themeClasses,
       }
     },
@@ -130,23 +121,10 @@ export default mixins(
       const isCurrent = value === this.current
       const setColor = isSelected ? this.setBackgroundColor : this.setTextColor
       const color = (isSelected || isCurrent) && (this.color || 'accent')
-      let isFirst = false
-      let isLast = false
-      if (this.range && !!this.value && Array.isArray(this.value)) {
-        isFirst = value === this.value[0]
-        isLast = value === this.value[this.value.length - 1]
-      }
 
       return this.$createElement('button', setColor(color, {
         staticClass: 'v-btn',
-        class: this.genButtonClasses(
-          isAllowed && !isOtherMonth,
-          isFloating,
-          isSelected,
-          isCurrent,
-          isFirst,
-          isLast,
-        ),
+        class: this.genButtonClasses(isAllowed && !isOtherMonth, isFloating, isSelected, isCurrent),
         attrs: {
           type: 'button',
         },
@@ -199,13 +177,6 @@ export default mixins(
         staticClass: 'v-date-picker-table__events',
       }, eventColors.map(color => this.$createElement('div', this.setBackgroundColor(color)))) : null
     },
-    isValidScroll (value: number, calculateTableDate: CalculateTableDateFunction) {
-      const tableDate = calculateTableDate(value)
-      // tableDate is 'YYYY-MM' for DateTable and 'YYYY' for MonthTable
-      const sanitizeType = tableDate.split('-').length === 1 ? 'year' : 'month'
-      return (value < 0 && (this.min ? tableDate >= sanitizeDateString(this.min, sanitizeType) : true)) ||
-        (value > 0 && (this.max ? tableDate <= sanitizeDateString(this.max, sanitizeType) : true))
-    },
     wheel (e: WheelEvent, calculateTableDate: CalculateTableDateFunction) {
       this.$emit('update:table-date', calculateTableDate(e.deltaY))
     },
@@ -220,10 +191,8 @@ export default mixins(
       const touchDirective = {
         name: 'touch',
         value: {
-          left: (e: TouchWrapper) => (e.offsetX < -15) &&
-            (this.isValidScroll(1, calculateTableDate) && this.touch(1, calculateTableDate)),
-          right: (e: TouchWrapper) => (e.offsetX > 15) &&
-            (this.isValidScroll(-1, calculateTableDate) && this.touch(-1, calculateTableDate)),
+          left: (e: TouchWrapper) => (e.offsetX < -15) && this.touch(1, calculateTableDate),
+          right: (e: TouchWrapper) => (e.offsetX > 15) && this.touch(-1, calculateTableDate),
         },
       }
 
@@ -236,7 +205,7 @@ export default mixins(
         on: (!this.disabled && this.scrollable) ? {
           wheel: (e: WheelEvent) => {
             e.preventDefault()
-            if (this.isValidScroll(e.deltaY, calculateTableDate)) { this.wheelThrottle(e, calculateTableDate) }
+            this.wheelThrottle(e, calculateTableDate)
           },
         } : undefined,
         directives: [touchDirective],

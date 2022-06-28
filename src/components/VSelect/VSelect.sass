@@ -1,18 +1,14 @@
 @import './_variables.scss'
 
 +theme(v-select) using ($material)
-  .v-select__selections
+  .v-select__selection--comma
     color: map-deep-get($material, 'text', 'primary')
-
-  &.v-input--is-disabled
-    .v-select__selections
-      color: map-deep-get($material, 'text', 'disabled')
 
   .v-select__selection--disabled
     color: map-deep-get($material, 'text', 'disabled')
 
   &.v-text-field--solo-inverted.v-input--is-focused
-    .v-select__selections
+    .v-select__selection--comma
       color: map-deep-get($material, 'inputs', 'solo-inverted-focused-text')
 
 .v-select
@@ -62,11 +58,10 @@
   &.v-text-field
     input
       flex: 1 1 // Doesn't resize on IE11 with 3rd param
-      min-width: 0
-      position: relative
-
-    &:not(.v-text-field--single-line) input
       margin-top: 0
+      min-width: 0
+      pointer-events: none
+      position: relative
 
   @if $select-active-icon-flip
     &.v-select--is-menu-active
@@ -117,9 +112,6 @@
     .v-select__selections
       flex-direction: row-reverse
 
-  &.v-input--is-disabled:not(.v-input--is-readonly):not(.v-autocomplete)
-    pointer-events: none
-
   &__selections
     align-items: center
     display: flex
@@ -134,7 +126,6 @@
 
     &--comma
       margin: $select-selections-margin
-      min-height: $select-selections-min-height
       overflow: hidden
       text-overflow: ellipsis
       white-space: nowrap

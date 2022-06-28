@@ -351,8 +351,6 @@ export default baseMixins.extend({
     },
     genListeners () {
       const on: Record<string, (e: Event) => void> = {
-        mouseenter: () => (this.isMouseover = true),
-        mouseleave: () => (this.isMouseover = false),
         transitionend: (e: Event) => {
           if (e.target !== e.currentTarget) return
           this.$emit('transitionend', e)
@@ -366,6 +364,11 @@ export default baseMixins.extend({
 
       if (this.miniVariant) {
         on.click = () => this.$emit('update:mini-variant', false)
+      }
+
+      if (this.expandOnHover) {
+        on.mouseenter = () => (this.isMouseover = true)
+        on.mouseleave = () => (this.isMouseover = false)
       }
 
       return on
@@ -439,12 +442,12 @@ export default baseMixins.extend({
         !this.$el
       ) return 0
 
-      const width = Number(this.miniVariant ? this.miniVariantWidth : this.width)
+      const width = Number(this.computedWidth)
 
       return isNaN(width) ? this.$el.clientWidth : width
     },
     updateMiniVariant (val: boolean) {
-      if (this.expandOnHover && this.miniVariant !== val) this.$emit('update:mini-variant', val)
+      if (this.miniVariant !== val) this.$emit('update:mini-variant', val)
     },
   },
 

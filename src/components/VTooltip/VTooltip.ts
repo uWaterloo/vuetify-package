@@ -5,7 +5,9 @@ import Activatable from '../../mixins/activatable'
 import Colorable from '../../mixins/colorable'
 import Delayable from '../../mixins/delayable'
 import Dependent from '../../mixins/dependent'
+import Detachable from '../../mixins/detachable'
 import Menuable from '../../mixins/menuable'
+import Toggleable from '../../mixins/toggleable'
 
 // Helpers
 import { convertToUnit, keyCodes, getSlotType } from '../../util/helpers'
@@ -16,7 +18,7 @@ import { VNode } from 'vue'
 import mixins from '../../util/mixins'
 
 /* @vue/component */
-export default mixins(Colorable, Delayable, Dependent, Menuable).extend({
+export default mixins(Colorable, Delayable, Dependent, Detachable, Menuable, Toggleable).extend({
   name: 'v-tooltip',
 
   props: {
@@ -25,15 +27,15 @@ export default mixins(Colorable, Delayable, Dependent, Menuable).extend({
       default: 0,
     },
     disabled: Boolean,
+    fixed: {
+      type: Boolean,
+      default: true,
+    },
     openDelay: {
       type: [Number, String],
       default: 0,
     },
     openOnHover: {
-      type: Boolean,
-      default: true,
-    },
-    openOnFocus: {
       type: Boolean,
       default: true,
     },
@@ -96,9 +98,8 @@ export default mixins(Colorable, Delayable, Dependent, Menuable).extend({
 
       if (this.nudgeTop) top -= parseInt(this.nudgeTop)
       if (this.nudgeBottom) top += parseInt(this.nudgeBottom)
-      if (this.attach === false) top += this.pageYOffset
 
-      return `${this.calcYOverflow(top)}px`
+      return `${this.calcYOverflow(top + this.pageYOffset)}px`
     },
     classes (): object {
       return {
@@ -128,6 +129,7 @@ export default mixins(Colorable, Delayable, Dependent, Menuable).extend({
         left: this.calculatedLeft,
         maxWidth: convertToUnit(this.maxWidth),
         minWidth: convertToUnit(this.minWidth),
+        opacity: this.isActive ? 0.9 : 0,
         top: this.calculatedTop,
         zIndex: this.zIndex || this.activeZIndex,
       }
@@ -160,17 +162,14 @@ export default mixins(Colorable, Delayable, Dependent, Menuable).extend({
     genActivatorListeners () {
       const listeners = Activatable.options.methods.genActivatorListeners.call(this)
 
-      if (this.openOnFocus) {
-        listeners.focus = (e: Event) => {
-          this.getActivator(e)
-          this.runDelay('open')
-        }
-        listeners.blur = (e: Event) => {
-          this.getActivator(e)
-          this.runDelay('close')
-        }
+      listeners.focus = (e: Event) => {
+        this.getActivator(e)
+        this.runDelay('open')
       }
-
+      listeners.blur = (e: Event) => {
+        this.getActivator(e)
+        this.runDelay('close')
+      }
       listeners.keydown = (e: KeyboardEvent) => {
         if (e.keyCode === keyCodes.esc) {
           this.getActivator(e)

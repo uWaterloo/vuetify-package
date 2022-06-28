@@ -11,6 +11,7 @@ import Detachable from '../../mixins/detachable'
 import Overlayable from '../../mixins/overlayable'
 import Returnable from '../../mixins/returnable'
 import Stackable from '../../mixins/stackable'
+import Toggleable from '../../mixins/toggleable'
 
 // Directives
 import ClickOutside from '../../directives/click-outside'
@@ -27,12 +28,13 @@ import {
 import { VNode, VNodeData } from 'vue'
 
 const baseMixins = mixins(
+  Activatable,
   Dependent,
   Detachable,
   Overlayable,
   Returnable,
   Stackable,
-  Activatable,
+  Toggleable
 )
 
 /* @vue/component */
@@ -46,7 +48,10 @@ export default baseMixins.extend({
     disabled: Boolean,
     fullscreen: Boolean,
     light: Boolean,
-    maxWidth: [String, Number],
+    maxWidth: {
+      type: [String, Number],
+      default: 'none',
+    },
     noClickAnimation: Boolean,
     origin: {
       type: String,
@@ -62,7 +67,10 @@ export default baseMixins.extend({
       type: [String, Boolean],
       default: 'dialog-transition',
     },
-    width: [String, Number],
+    width: {
+      type: [String, Number],
+      default: 'auto',
+    },
   },
 
   data () {
@@ -70,6 +78,7 @@ export default baseMixins.extend({
       activatedBy: null as EventTarget | null,
       animate: false,
       animateTimeout: -1,
+      isActive: !!this.value,
       stackMinZIndex: 200,
       previousActiveElement: null as HTMLElement | null,
     }
@@ -178,10 +187,8 @@ export default baseMixins.extend({
       // Double nextTick to wait for lazy content to be generated
       this.$nextTick(() => {
         this.$nextTick(() => {
-          if (!this.$refs.content.contains(document.activeElement)) {
-            this.previousActiveElement = document.activeElement as HTMLElement
-            this.$refs.content.focus()
-          }
+          this.previousActiveElement = document.activeElement as HTMLElement
+          this.$refs.content.focus()
           this.bind()
         })
       })
@@ -250,9 +257,8 @@ export default baseMixins.extend({
           this.$createElement('div', {
             class: this.contentClasses,
             attrs: {
-              role: 'dialog',
+              role: 'document',
               tabindex: this.isActive ? 0 : undefined,
-              'aria-modal': this.hideOverlay ? undefined : 'true',
               ...this.getScopeIdAttrs(),
             },
             on: { keydown: this.onKeydown },
@@ -298,8 +304,8 @@ export default baseMixins.extend({
       if (!this.fullscreen) {
         data.style = {
           ...data.style as object,
-          maxWidth: convertToUnit(this.maxWidth),
-          width: convertToUnit(this.width),
+          maxWidth: this.maxWidth === 'none' ? undefined : convertToUnit(this.maxWidth),
+          width: this.width === 'auto' ? undefined : convertToUnit(this.width),
         }
       }
 
@@ -316,6 +322,7 @@ export default baseMixins.extend({
           this.attach === true ||
           this.attach === 'attach',
       },
+      attrs: { role: 'dialog' },
     }, [
       this.genActivator(),
       this.genContent(),

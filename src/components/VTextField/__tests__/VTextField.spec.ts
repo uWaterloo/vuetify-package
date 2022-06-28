@@ -96,9 +96,7 @@ describe('VTextField.ts', () => { // eslint-disable-line max-statements
   })
 
   it('should start validating on input', async () => {
-    const wrapper = mountFunction({
-      attachToDocument: true,
-    })
+    const wrapper = mountFunction()
 
     expect(wrapper.vm.shouldValidate).toEqual(false)
     wrapper.setProps({ value: 'asd' })
@@ -220,7 +218,6 @@ describe('VTextField.ts', () => { // eslint-disable-line max-statements
   it('should start validating on blur', async () => {
     const rule = jest.fn().mockReturnValue(true)
     const wrapper = mountFunction({
-      attachToDocument: true,
       propsData: {
         rules: [rule],
         validateOnBlur: true,
@@ -294,9 +291,7 @@ describe('VTextField.ts', () => { // eslint-disable-line max-statements
         })
       },
     }
-    const wrapper = mount(component, {
-      attachToDocument: true,
-    })
+    const wrapper = mount(component)
 
     const input = wrapper.findAll('input').at(0)
 
@@ -628,33 +623,24 @@ describe('VTextField.ts', () => { // eslint-disable-line max-statements
     expect(input.element.id).toBe('foo')
   })
 
-  it('should fire change event when pressing enter and value has changed', () => {
+  it('should fire change event when pressing enter', () => {
     const wrapper = mountFunction()
     const input = wrapper.find('input')
     const change = jest.fn()
-    const el = input.element as HTMLInputElement
 
     wrapper.vm.$on('change', change)
 
     input.trigger('focus')
-    el.value = 'foo'
+    input.element.value = 'foo'
     input.trigger('input')
     input.trigger('keydown.enter')
-    input.trigger('keydown.enter')
-
-    expect(change).toHaveBeenCalledTimes(1)
-
-    el.value = 'foobar'
-    input.trigger('input')
     input.trigger('keydown.enter')
 
     expect(change).toHaveBeenCalledTimes(2)
   })
 
   it('should have focus and blur methods', async () => {
-    const wrapper = mountFunction({
-      attachToDocument: true,
-    })
+    const wrapper = mountFunction()
     const onBlur = jest.spyOn(wrapper.vm.$refs.input, 'blur')
     const onFocus = jest.spyOn(wrapper.vm.$refs.input, 'focus')
 
@@ -791,9 +777,7 @@ describe('VTextField.ts', () => { // eslint-disable-line max-statements
         })
       },
     }
-    const wrapper = mount(component, {
-      attachToDocument: true,
-    })
+    const wrapper = mount(component)
 
     const inputElement = wrapper.findAll('input').at(0)
     const clearIcon = wrapper.find('.v-input__icon--clear .v-icon')
@@ -828,7 +812,6 @@ describe('VTextField.ts', () => { // eslint-disable-line max-statements
 
   it('should autofocus text-field when intersected', async () => {
     const wrapper = mountFunction({
-      attachToDocument: true,
       propsData: { autofocus: true },
     })
     const input = wrapper.find('input')
@@ -861,7 +844,6 @@ describe('VTextField.ts', () => { // eslint-disable-line max-statements
 
   it('should use the correct icon color when using the solo inverted prop', () => {
     const wrapper = mountFunction({
-      attachToDocument: true,
       propsData: { soloInverted: true },
       mocks: {
         $vuetify: {

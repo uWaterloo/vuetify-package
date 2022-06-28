@@ -1,43 +1,23 @@
 // Mixins
+import Positionable from '../positionable'
 import Stackable from '../stackable'
-import { factory as positionableFactory } from '../positionable'
 import Activatable from '../activatable'
-import Detachable from '../detachable'
 
 // Utilities
 import mixins, { ExtractVue } from '../../util/mixins'
 import { convertToUnit } from '../../util/helpers'
 
 // Types
-import { VNode } from 'vue'
-
 const baseMixins = mixins(
   Stackable,
-  positionableFactory(['top', 'right', 'bottom', 'left', 'absolute']),
-  Activatable,
-  Detachable,
+  Positionable,
+  Activatable
 )
-
-interface dimensions {
-  top: number
-  left: number
-  bottom: number
-  right: number
-  width: number
-  height: number
-  offsetTop: number
-  scrollHeight: number
-  offsetLeft: number
-}
 
 interface options extends ExtractVue<typeof baseMixins> {
   attach: boolean | string | Element
   offsetY: boolean
   offsetX: boolean
-  dimensions: {
-    activator: dimensions
-    content: dimensions
-  }
   $refs: {
     content: HTMLElement
     activator: HTMLElement
@@ -78,6 +58,7 @@ export default baseMixins.extend<options>().extend({
       default: 0,
     },
     offsetOverflow: Boolean,
+    openOnClick: Boolean,
     positionX: {
       type: Number,
       default: null,
@@ -93,7 +74,6 @@ export default baseMixins.extend<options>().extend({
   },
 
   data: () => ({
-    activatorNode: [] as VNode[],
     absoluteX: 0,
     absoluteY: 0,
     activatedBy: null as EventTarget | null,
@@ -121,7 +101,6 @@ export default baseMixins.extend<options>().extend({
         scrollHeight: 0,
       },
     },
-    relativeYOffset: 0,
     hasJustFocused: false,
     hasWindow: false,
     inputActivator: false,
@@ -139,8 +118,7 @@ export default baseMixins.extend<options>().extend({
       const activatorLeft = (this.attach !== false ? a.offsetLeft : a.left) || 0
       const minWidth = Math.max(a.width, c.width)
       let left = 0
-      left += activatorLeft
-      if (this.left || (this.$vuetify.rtl && !this.right)) left -= (minWidth - a.width)
+      left += this.left ? activatorLeft - (minWidth - a.width) : activatorLeft
       if (this.offsetX) {
         const maxWidth = isNaN(Number(this.maxWidth))
           ? a.width
@@ -170,9 +148,6 @@ export default baseMixins.extend<options>().extend({
     hasActivator (): boolean {
       return !!this.$slots.activator || !!this.$scopedSlots.activator || !!this.activator || !!this.inputActivator
     },
-    absoluteYOffset (): number {
-      return this.pageYOffset - this.relativeYOffset
-    },
   },
 
   watch: {
@@ -190,23 +165,13 @@ export default baseMixins.extend<options>().extend({
 
   beforeMount () {
     this.hasWindow = typeof window !== 'undefined'
-
-    if (this.hasWindow) {
-      window.addEventListener('resize', this.updateDimensions, false)
-    }
-  },
-
-  beforeDestroy () {
-    if (this.hasWindow) {
-      window.removeEventListener('resize', this.updateDimensions, false)
-    }
   },
 
   methods: {
     absolutePosition () {
       return {
-        offsetTop: this.positionY || this.absoluteY,
-        offsetLeft: this.positionX || this.absoluteX,
+        offsetTop: 0,
+        offsetLeft: 0,
         scrollHeight: 0,
         top: this.positionY || this.absoluteY,
         bottom: this.positionY || this.absoluteY,
@@ -240,7 +205,7 @@ export default baseMixins.extend<options>().extend({
     },
     calcYOverflow (top: number) {
       const documentHeight = this.getInnerHeight()
-      const toTop = this.absoluteYOffset + documentHeight
+      const toTop = this.pageYOffset + documentHeight
       const activator = this.dimensions.activator
       const contentHeight = this.dimensions.content.height
       const totalHeight = top + contentHeight
@@ -259,8 +224,8 @@ export default baseMixins.extend<options>().extend({
       } else if (isOverflowing && !this.allowOverflow) {
         top = toTop - contentHeight - 12
       // If overflowing top
-      } else if (top < this.absoluteYOffset && !this.allowOverflow) {
-        top = this.absoluteYOffset + 12
+      } else if (top < this.pageYOffset && !this.allowOverflow) {
+        top = this.pageYOffset + 12
       }
 
       return top < 12 ? 12 : top
@@ -298,15 +263,13 @@ export default baseMixins.extend<options>().extend({
 
       const onClick = listeners.click
 
-      if (onClick) {
-        listeners.click = (e: MouseEvent & KeyboardEvent & FocusEvent) => {
-          if (this.openOnClick) {
-            onClick && onClick(e)
-          }
-
-          this.absoluteX = e.clientX
-          this.absoluteY = e.clientY
+      listeners.click = (e: MouseEvent & KeyboardEvent & FocusEvent) => {
+        if (this.openOnClick) {
+          onClick && onClick(e)
         }
+
+        this.absoluteX = e.clientX
+        this.absoluteY = e.clientY
       }
 
       return listeners
@@ -406,17 +369,7 @@ export default baseMixins.extend<options>().extend({
 
       // Display and hide to get dimensions
       this.sneakPeek(() => {
-        if (this.$refs.content) {
-          if (this.$refs.content.offsetParent) {
-            const offsetRect = this.getRoundedBoundedClientRect(this.$refs.content.offsetParent)
-
-            this.relativeYOffset = window.pageYOffset + offsetRect.top
-            dimensions.activator.top -= this.relativeYOffset
-            dimensions.activator.left -= window.pageXOffset + offsetRect.left
-          }
-
-          dimensions.content = this.measure(this.$refs.content)
-        }
+        this.$refs.content && (dimensions.content = this.measure(this.$refs.content))
 
         this.dimensions = dimensions
       })

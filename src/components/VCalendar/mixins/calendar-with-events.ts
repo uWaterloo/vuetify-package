@@ -26,7 +26,6 @@ import {
   isEventStart,
   isEventOn,
   isEventOverlapping,
-  isEventHiddenOn,
 } from '../util/events'
 import {
   CalendarTimestamp,
@@ -172,25 +171,23 @@ export default CalendarBase.extend({
 
         const parentBounds = parent.getBoundingClientRect()
         const last = events.length - 1
-        const eventsSorted = events.map(event => ({
-          event,
-          bottom: event.getBoundingClientRect().bottom,
-        })).sort((a, b) => a.bottom - b.bottom)
+        let hide = false
         let hidden = 0
 
         for (let i = 0; i <= last; i++) {
-          const bottom = eventsSorted[i].bottom
-          const hide = i === last
-            ? (bottom > parentBounds.bottom)
-            : (bottom + eventHeight > parentBounds.bottom)
-
+          if (!hide) {
+            const eventBounds = events[i].getBoundingClientRect()
+            hide = i === last
+              ? (eventBounds.bottom > parentBounds.bottom)
+              : (eventBounds.bottom + eventHeight > parentBounds.bottom)
+          }
           if (hide) {
-            eventsSorted[i].event.style.display = 'none'
+            events[i].style.display = 'none'
             hidden++
           }
         }
 
-        if (hidden) {
+        if (hide) {
           more.style.display = ''
           more.innerHTML = this.$vuetify.lang.t(this.eventMoreText, hidden)
         } else {
@@ -270,7 +267,7 @@ export default CalendarBase.extend({
       })
     },
     genTimedEvent ({ event, left, width }: CalendarEventVisual, day: CalendarDayBodySlotScope): VNode | false {
-      if (day.timeDelta(event.end) < 0 || day.timeDelta(event.start) >= 1 || isEventHiddenOn(event, day)) {
+      if (day.timeDelta(event.end) <= 0 || day.timeDelta(event.start) >= 1) {
         return false
       }
 
@@ -302,17 +299,17 @@ export default CalendarBase.extend({
       const timeSummary = () => formatTime(event.start, overlapsNoon) + ' - ' + formatTime(event.end, true)
       const eventSummary = () => {
         const name = this.eventNameFunction(event, timedEvent)
+
         if (event.start.hasTime) {
-          const eventSummaryClass = 'v-event-summary'
           if (timedEvent) {
             const time = timeSummary()
             const delimiter = singline ? ', ' : '<br>'
 
-            return `<span class="${eventSummaryClass}"><strong>${name}</strong>${delimiter}${time}</span>`
+            return `<strong>${name}</strong>${delimiter}${time}`
           } else {
             const time = formatTime(event.start, true)
 
-            return `<span class="${eventSummaryClass}"><strong>${time}</strong> ${name}</span>`
+            return `<strong>${time}</strong> ${name}`
           }
         }
 
@@ -384,10 +381,9 @@ export default CalendarBase.extend({
           name: 'ripple',
           value: this.eventRipple ?? true,
         }],
-        on: this.getDefaultMouseEventHandlers(':more', nativeEvent => {
-          return { nativeEvent, ...day }
-        }),
-
+        on: {
+          click: () => this.$emit('click:more', day),
+        },
         style: {
           display: 'none',
           height: `${eventHeight}px`,
@@ -409,7 +405,6 @@ export default CalendarBase.extend({
       return !this.categoryMode ||
         (typeof category === 'object' && category.categoryName &&
         category.categoryName === event.category) ||
-        (typeof event.category === 'string' && category === event.category) ||
         (typeof event.category !== 'string' && category === null)
     },
     getEventsForDay (day: CalendarDaySlotScope): CalendarEventParsed[] {
@@ -432,6 +427,7 @@ export default CalendarBase.extend({
     },
     getEventsForDayTimed (day: CalendarDaySlotScope): CalendarEventParsed[] {
       const identifier = getDayIdentifier(day)
+
       return this.parsedEvents.filter(
         event => !event.allDay &&
           isEventOn(event, identifier) &&

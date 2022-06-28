@@ -111,6 +111,9 @@
   &--dense > .v-input__control > .v-input__slot
     margin-bottom: $input-dense-slot-margin-bottom
 
+  &--is-disabled:not(.v-input--is-readonly)
+    pointer-events: none
+
   &--is-loading > .v-input__control > .v-input__slot
     &:before,
     &:after
@@ -122,11 +125,3 @@
   &--has-state
     &.error--text .v-label
       animation: v-shake .6s map-get($transition, 'swing')
-
-  &--hide-spin-buttons
-    input::-webkit-outer-spin-button,
-    input::-webkit-inner-spin-button
-      -webkit-appearance: none
-      margin: 0
-    input[type=number]
-      -moz-appearance: textfield

@@ -38,7 +38,6 @@ export default VTextField.extend({
       default: '$vuetify.fileInput.counter',
     },
     hideInput: Boolean,
-    multiple: Boolean,
     placeholder: String,
     prependIcon: {
       type: String,
@@ -83,7 +82,7 @@ export default VTextField.extend({
       }
     },
     computedCounterValue (): string {
-      const fileCount = (this.multiple && this.lazyValue)
+      const fileCount = (this.isMultiple && this.lazyValue)
         ? this.lazyValue.length
         : (this.lazyValue instanceof File) ? 1 : 0
 
@@ -117,8 +116,11 @@ export default VTextField.extend({
     isLabelActive (): boolean {
       return this.isDirty
     },
+    isMultiple (): boolean {
+      return this.$attrs.hasOwnProperty('multiple')
+    },
     text (): string[] {
-      if (!this.isDirty && (this.persistentPlaceholder || this.isFocused || !this.hasLabel)) return [this.placeholder]
+      if (!this.isDirty) return [this.placeholder]
 
       return this.internalArrayValue.map((file: File) => {
         const {
@@ -149,7 +151,7 @@ export default VTextField.extend({
       immediate: true,
     },
     value (v) {
-      const value = this.multiple ? v : v ? [v] : []
+      const value = this.isMultiple ? v : v ? [v] : []
       if (!deepEqual(value, this.$refs.input.files)) {
         // When the input value is changed programatically, clear the
         // internal input's value so that the `onInput` handler
@@ -163,7 +165,7 @@ export default VTextField.extend({
 
   methods: {
     clearableCallback () {
-      this.internalValue = this.multiple ? [] : null
+      this.internalValue = this.isMultiple ? [] : null
       this.$refs.input.value = ''
     },
     genChips () {
@@ -194,8 +196,6 @@ export default VTextField.extend({
     },
     genInput () {
       const input = VTextField.options.methods.genInput.call(this)
-
-      input.data!.attrs!.multiple = this.multiple
 
       // We should not be setting value
       // programmatically on the input
@@ -267,7 +267,7 @@ export default VTextField.extend({
     onInput (e: Event) {
       const files = [...(e.target as HTMLInputElement).files || []]
 
-      this.internalValue = this.multiple ? files : files[0]
+      this.internalValue = this.isMultiple ? files : files[0]
 
       // Set initialValue here otherwise isFocused
       // watcher in VTextField will emit a change

@@ -48,7 +48,6 @@ export default baseMixins.extend<options>().extend({
     dense: Boolean,
     height: [Number, String],
     hideDetails: [Boolean, String] as PropType<boolean | 'auto'>,
-    hideSpinButtons: Boolean,
     hint: String,
     id: String,
     label: String,
@@ -78,7 +77,6 @@ export default baseMixins.extend<options>().extend({
         'v-input--is-loading': this.loading !== false && this.loading != null,
         'v-input--is-readonly': this.isReadonly,
         'v-input--dense': this.dense,
-        'v-input--hide-spin-buttons': this.hideSpinButtons,
         ...this.themeClasses,
       }
     },
@@ -156,7 +154,6 @@ export default baseMixins.extend<options>().extend({
     genControl () {
       return this.$createElement('div', {
         staticClass: 'v-input__control',
-        attrs: { title: this.attrs$.title },
       }, [
         this.genInputSlot(),
         this.genMessages(),
